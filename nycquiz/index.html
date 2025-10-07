@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The True New Yorker Quiz</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom configuration for Inter font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* Dark background */
+        }
+        .quiz-container {
+            max-width: 768px;
+        }
+        .option-button:hover:not(.selected) {
+            background-color: #1f2937; /* Darker blue on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .option-button.selected {
+            background-color: #3b82f6; /* Blue selected color */
+            color: white;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <div class="quiz-container w-full bg-gray-800 p-6 sm:p-10 rounded-xl shadow-2xl mt-8">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white text-center mb-2 tracking-tight">
+            The True New Yorker Test
+        </h1>
+        <p class="text-gray-400 text-center mb-8">
+            Answer 25 questions to prove your NYC cred.
+        </p>
+
+        <!-- Quiz Display Area -->
+        <div id="quiz-questions" class="space-y-8">
+            <!-- Questions will be dynamically inserted here -->
+        </div>
+
+        <!-- Submission and Results Area -->
+        <div id="quiz-footer" class="mt-10 text-center">
+            <button id="submit-button" 
+                    class="w-full sm:w-auto px-8 py-3 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 transition duration-200 focus:outline-none focus:ring-4 focus:ring-green-500/50 transform active:scale-95"
+                    onclick="submitQuiz()">
+                Submit Your Answers
+            </button>
+        </div>
+
+        <!-- Result Modal (Initially Hidden) -->
+        <div id="result-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+            <div class="bg-gray-700 p-8 rounded-xl shadow-2xl max-w-sm w-full text-center transform transition-all duration-300 scale-95 opacity-0" id="modal-content">
+                <h2 class="text-3xl font-bold mb-3 text-yellow-300">Your Verdict</h2>
+                <p id="result-score" class="text-xl font-semibold mb-4 text-white"></p>
+                <p id="result-verdict" class="text-4xl font-extrabold mb-6" style="color: #4CAF50;"></p>
+                <p id="result-description" class="text-gray-300 mb-6"></p>
+                <button onclick="window.location.reload()" class="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200">
+                    Try Again
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Use a unique App ID for Firebase/Firestore, though this app doesn't use it, 
+        // it's good practice for the environment.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'nyc-quiz-app';
+
+        // --- QUIZ DATA ---
+        const quizQuestions = [
+            {
+                question: "What is the typical 'regular' coffee order at a NYC corner bodega?",
+                options: ["Black, extra sugar", "Milk and sugar", "Decaf, black", "Just black"],
+                answer: "Milk and sugar"
+            },
+            {
+                question: "If someone says they're 'heading up to The Bronx,' what direction are they generally going?",
+                options: ["West", "East", "North", "South"],
+                answer: "North"
+            },
+            {
+                question: "What is the largest borough of New York City by land area?",
+                options: ["Brooklyn", "Manhattan", "Queens", "Staten Island"],
+                answer: "Queens"
+            },
+            {
+                question: "Which street marks the general boundary between 'downtown' and 'uptown' Manhattan for locals?",
+                options: ["42nd Street", "Houston Street (Howst'n)", "14th Street", "Canal Street"],
+                answer: "14th Street"
+            },
+            {
+                question: "What is the proper name for the famed public green space located in the middle of Flushing Meadows-Corona Park?",
+                options: ["The Unisphere", "The Oculus", "The Bethesda Terrace", "The Washington Square Arch"],
+                answer: "The Unisphere"
+            },
+            {
+                question: "The area referred to as 'The Deuce' historically corresponds to which Manhattan street?",
+                options: ["Fifth Avenue", "Broadway", "42nd Street", "Wall Street"],
+                answer: "42nd Street"
+            },
+            {
+                question: "In NYC subway etiquette, what is the best strategy when encountering 'Showtime!' performers?",
+                options: ["Offer them money for the show", "Yell for the conductor", "Ignore them and move out of the way", "Start a drum circle"],
+                answer: "Ignore them and move out of the way"
+            },
+            {
+                question: "Which of the five boroughs is the only one not accessible by the subway system?",
+                options: ["The Bronx", "Queens", "Staten Island", "Brooklyn"],
+                answer: "Staten Island"
+            },
+            {
+                question: "What is a 'Schmear'?",
+                options: ["A type of bagel dough", "A thin layer of cream cheese", "A low-quality street pizza", "A deli sandwich"],
+                answer: "A thin layer of cream cheese"
+            },
+            {
+                question: "When is the most acceptable time for a New Yorker to honk their horn?",
+                options: ["When traffic is moving slowly", "When a pedestrian is crossing", "When another driver is driving too fast", "Never (unless life-or-death emergency)"],
+                answer: "Never (unless life-or-death emergency)"
+            },
+            {
+                question: "Which famous landmark is located directly across from the New York Stock Exchange on Wall Street?",
+                options: ["Charging Bull", "Fearless Girl", "Trinity Church", "Federal Hall"],
+                answer: "Federal Hall"
+            },
+            {
+                question: "What connects Brooklyn and Queens, giving Manhattan a major headache?",
+                options: ["Verrazzano-Narrows Bridge", "Williamsburg Bridge", "The BQE (Brooklyn-Queens Expressway)", "Triborough Bridge"],
+                answer: "The BQE (Brooklyn-Queens Expressway)"
+            },
+            {
+                question: "What is the typical color of an authentic NYC water tower?",
+                options: ["Blue", "Red", "Silver/Metallic", "Natural Redwood/Brown"],
+                answer: "Natural Redwood/Brown"
+            },
+            {
+                question: "What kind of sandwich is a 'Chopped Cheese' primarily associated with?",
+                options: ["A Philly Cheesesteak", "A bodega staple from Harlem/Bronx", "A Jewish deli corned beef sandwich", "An Italian hero"],
+                answer: "A bodega staple from Harlem/Bronx"
+            },
+            {
+                question: "If you want to catch the '7 train,' where should you head to ride it, primarily?",
+                options: ["Manhattan and Staten Island", "The Bronx and Brooklyn", "Manhattan and Queens", "Brooklyn and Queens"],
+                answer: "Manhattan and Queens"
+            },
+            {
+                question: "What is the name of the iconic steps outside the main branch of the New York Public Library (at 42nd St)?",
+                options: ["The Rockefeller Steps", "The Met Steps", "The Beaux-Arts Steps", "The Grand Staircase"],
+                answer: "The Beaux-Arts Steps"
+            },
+            {
+                question: "What is the only NFL team officially based *within* the borders of New York City?",
+                options: ["New York Jets", "New York Giants", "Buffalo Bills", "None of the above"],
+                answer: "None of the above"
+            },
+            {
+                question: "The popular elevated park known as The High Line was originally what kind of infrastructure?",
+                options: ["A trolley line", "A freight rail line", "A pedestrian sky bridge", "An aqueduct"],
+                answer: "A freight rail line"
+            },
+            {
+                question: "Which two major NYC streets are famous for their parallel placement forming the border of SoHo?",
+                options: ["Bleecker and St. Marks", "Houston and Canal", "Delancey and Rivington", "Broadway and 5th Ave"],
+                answer: "Houston and Canal"
+            },
+            {
+                question: "What is the term for the often-unspoken rule that you should never stop directly at the top or bottom of a staircase in a subway station?",
+                options: ["The Landing Law", "The Human Flow Principle", "The Stop-and-Frisk Rule", "The Stairwell Standoff"],
+                answer: "The Human Flow Principle"
+            },
+            {
+                question: "In which borough would you find Arthur Ashe Stadium and the US Open?",
+                options: ["Queens", "The Bronx", "Manhattan", "Staten Island"],
+                answer: "Queens"
+            },
+            {
+                question: "What is the unofficial name given to the stretch of Fifth Avenue from 82nd to 105th Street, due to the concentration of museums?",
+                options: ["Gallery Row", "Museum Mile", "Cultural Corridor", "The Heritage Path"],
+                answer: "Museum Mile"
+            },
+            {
+                question: "What year did the five boroughs officially consolidate into the modern City of New York?",
+                options: ["1776", "1898", "1913", "1932"],
+                answer: "1898"
+            },
+            {
+                question: "When navigating the grid system in Manhattan, if you walk from 50th Street to 48th Street, you are walking:",
+                options: ["Uptown", "Downtown", "East", "West"],
+                answer: "Downtown"
+            },
+            {
+                question: "What is the common term for a temporary wall put up in an apartment to create an extra room?",
+                options: ["A room divider", "A pressurized wall", "A pop-up barrier", "A renter's folly"],
+                answer: "A pressurized wall"
+            },
+        ];
+
+        let userAnswers = {}; // {qIndex: 'Selected Option', ...}
+
+        // --- RENDERING FUNCTIONS ---
+
+        function renderQuestions() {
+            const container = document.getElementById('quiz-questions');
+            container.innerHTML = quizQuestions.map((q, index) => `
+                <div class="question-block p-5 bg-gray-700 rounded-lg shadow-xl" data-q-index="${index}">
+                    <h3 class="text-xl font-semibold mb-4 text-white">
+                        <span class="text-blue-400 mr-2">${index + 1}.</span> ${q.question}
+                    </h3>
+                    <div class="options-container space-y-3">
+                        ${q.options.map(option => `
+                            <button class="option-button w-full text-left p-3 border border-gray-600 rounded-lg text-gray-200 transition duration-150 ease-in-out transform"
+                                    data-option="${option}"
+                                    data-q-index="${index}"
+                                    onclick="selectAnswer(${index}, '${option.replace(/'/g, "\\'")}')">
+                                ${option}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Handles selection of an answer option
+        function selectAnswer(qIndex, selectedOption) {
+            userAnswers[qIndex] = selectedOption;
+
+            const questionBlock = document.querySelector(`.question-block[data-q-index="${qIndex}"]`);
+            const buttons = questionBlock.querySelectorAll('.option-button');
+
+            buttons.forEach(button => {
+                const option = button.getAttribute('data-option');
+                button.classList.remove('selected');
+                if (option === selectedOption) {
+                    button.classList.add('selected');
+                }
+            });
+
+            // If all questions are answered, enable the submit button
+            const submitBtn = document.getElementById('submit-button');
+            if (Object.keys(userAnswers).length === quizQuestions.length) {
+                 submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                 submitBtn.disabled = false;
+            } else {
+                 submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                 submitBtn.disabled = true;
+            }
+        }
+
+        // --- SCORING AND RESULT ---
+
+        function getVerdict(score) {
+            if (score === 25) {
+                return { 
+                    verdict: "TRUE NEW YORKER", 
+                    color: "#facc15", // yellow-300
+                    description: "You've earned your stripes! You know the unwritten rules, the history, and the fastest way to get to your favorite pizza joint. Now go stand where you're not supposed to on the subway platform."
+                };
+            } else if (score >= 17) {
+                return { 
+                    verdict: "CERTIFIED LOCAL", 
+                    color: "#4ade80", // green-400
+                    description: "Excellent score. You're past the tourist phase, you understand the grid, and you probably hate Times Square. Just a few more quirks to master."
+                };
+            } else if (score >= 9) {
+                return { 
+                    verdict: "HONORARY RESIDENT", 
+                    color: "#60a5fa", // blue-400
+                    description: "Not bad! You've learned the basics and can navigate the MTA without crying. You're a transplant who's found their footing. Keep walking faster."
+                };
+            } else {
+                return { 
+                    verdict: "FRESH OFF THE BUS", 
+                    color: "#f87171", // red-400
+                    description: "Welcome to New York! Your score suggests you might still be standing in the middle of the sidewalk. Start with a black coffee, two sugars, and don't make eye contact."
+                };
+            }
+        }
+
+        function submitQuiz() {
+            if (Object.keys(userAnswers).length !== quizQuestions.length) {
+                showIncompleteMessage();
+                return;
+            }
+
+            let score = 0;
+            quizQuestions.forEach((q, index) => {
+                if (userAnswers[index] === q.answer) {
+                    score++;
+                }
+            });
+
+            const resultData = getVerdict(score);
+
+            // Populate Modal
+            document.getElementById('result-score').textContent = `You scored ${score} out of ${quizQuestions.length}.`;
+            document.getElementById('result-verdict').textContent = resultData.verdict;
+            document.getElementById('result-verdict').style.color = resultData.color;
+            document.getElementById('result-description').textContent = resultData.description;
+
+            // Show Modal with animation
+            const modal = document.getElementById('result-modal');
+            const modalContent = document.getElementById('modal-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('opacity-0', 'scale-95');
+                modalContent.classList.add('opacity-100', 'scale-100');
+            }, 10);
+        }
+
+        function showIncompleteMessage() {
+             const submitBtn = document.getElementById('submit-button');
+             submitBtn.textContent = "Please answer all 25 questions!";
+             submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+             submitBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+             
+             setTimeout(() => {
+                submitBtn.textContent = "Submit Your Answers";
+                submitBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                submitBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+             }, 3000);
+        }
+
+        // Initialize the quiz when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            renderQuestions();
+            // Disable submit button initially until all questions are answered
+            const submitBtn = document.getElementById('submit-button');
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.disabled = true;
+        });
+
+    </script>
+</body>
+</html>
