@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPP | Tuesday Patio Party</title>
+    <style>
+        :root {
+            --neon-pink: #ff00ff;
+            --neon-cyan: #00ffff;
+            --deep-purple: #240b36;
+            --grid-color: rgba(0, 255, 255, 0.2);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom, #240b36 0%, #c31432 100%);
+            color: white;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* The Scrolling Grid Floor */
+        .grid-floor {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg);
+            transform-origin: top;
+            animation: moveGrid 2s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes moveGrid {
+            from { background-position: 0 0; }
+            to { background-position: 0 50px; }
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.1) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .container {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 3rem;
+            border: 3px solid var(--neon-pink);
+            box-shadow: 0 0 20px var(--neon-pink), inset 0 0 10px var(--neon-pink);
+            max-width: 600px;
+            backdrop-filter: blur(5px);
+        }
+
+        h1 {
+            font-size: 5rem;
+            margin: 0;
+            text-transform: uppercase;
+            font-style: italic;
+            color: var(--neon-cyan);
+            text-shadow: 3px 3px 0 var(--neon-pink), 5px 5px 15px rgba(0,0,0,1);
+            letter-spacing: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--neon-pink);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px var(--neon-pink);
+        }
+
+        .info-box {
+            border-top: 1px solid var(--neon-cyan);
+            border-bottom: 1px solid var(--neon-cyan);
+            padding: 1.5rem 0;
+            margin: 2rem 0;
+        }
+
+        .info-item {
+            font-size: 1.2rem;
+            margin: 0.5rem 0;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .highlight {
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: transparent;
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            text-decoration: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: 0.3s;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .cta-button:hover {
+            background: var(--neon-cyan);
+            color: var(--deep-purple);
+            box-shadow: 0 0 30px var(--neon-cyan);
+        }
+
+        /* Retro Sun */
+        .sun {
+            position: absolute;
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(#ff00ff, #ff8c00);
+            border-radius: 50%;
+            z-index: -1;
+            box-shadow: 0 0 50px #ff00ff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-floor"></div>
+    <div class="scanlines"></div>
+
+    <div class="container">
+        <div class="sun"></div>
+        <h1>TPP</h1>
+        <div class="subtitle">Tuesday Patio Party</div>
+        
+        <div class="info-box">
+            <div class="info-item">Every <span class="highlight">Tuesday</span> Afternoon</div>
+            <div class="info-item">4:00 PM - Late</div>
+            <div class="info-item">@ 325 Kent</div>
+        </div>
+
+        <p>Catch the sunset and hear some mid-week house music.</p>
+        
+        <a href="#" class="cta-button">Join the Wave</a>
+    </div>
+
+</body>
+</html>
